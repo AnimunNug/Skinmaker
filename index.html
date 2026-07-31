@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft Skin Constructor</title>
+    <style>
+        :root {
+            --bg-color: #1e1e2e;
+            --panel-bg: #282a36;
+            --text-color: #f8f8f2;
+            --accent-color: #bd93f9;
+            --border-radius: 8px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            display: flex;
+            gap: 40px;
+            background-color: var(--panel-bg);
+            padding: 30px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            max-width: 900px;
+            width: 100%;
+            flex-wrap: wrap;
+        }
+
+        .controls {
+            flex: 1;
+            min-width: 250px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        label {
+            font-size: 0.9em;
+            font-weight: 600;
+            color: #8be9fd;
+        }
+
+        select {
+            padding: 10px;
+            background-color: #44475a;
+            color: var(--text-color);
+            border: 1px solid #6272a4;
+            border-radius: 4px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        select:focus {
+            border-color: var(--accent-color);
+        }
+
+        .preview-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            min-width: 300px;
+        }
+
+        /* Канвас 64x64 искусственно увеличивается без размытия (pixel art) */
+        canvas {
+            width: 256px;
+            height: 256px;
+            background-color: #00000033;
+            border: 2px dashed #6272a4;
+            border-radius: 4px;
+            image-rendering: pixelated; /* Поддержка Chrome/Edge */
+            image-rendering: crisp-edges; /* Поддержка Firefox */
+        }
+
+        button {
+            padding: 12px 24px;
+            background-color: var(--accent-color);
+            color: #282a36;
+            border: none;
+            border-radius: var(--border-radius);
+            font-weight: bold;
+            font-size: 1em;
+            cursor: pointer;
+            transition: transform 0.1s, opacity 0.2s;
+            width: 100%;
+        }
+
+        button:hover {
+            opacity: 0.9;
+            transform: scale(1.02);
+        }
+        
+        button:active {
+            transform: scale(0.98);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="controls" id="controls">
+            <!-- Селекторы генерируются через JS -->
+        </div>
+
+        <div class="preview-section">
+            <canvas id="skinCanvas" width="64" height="64"></canvas>
+            <button onclick="downloadSkin()">Скачать скин</button>
+        </div>
+    </div>
+
+    <script>
+        // Конфигурация слоев. 
+        // Порядок в массиве определяет порядок наложения (z-index). Первые рисуются снизу.
+        const layersConfig = [
+            { id: 'skin', label: 'Цвет кожи', path: 'skinmake/skin', options: ['1', '2', '3'] },
+            { id: 'eyes', label: 'Глаза', path: 'skinmake/head/eyes', options: ['none', '1', '2', '3'] },
+            { id: 'nose', label: 'Нос', path: 'skinmake/head/nose', options: ['none', '1', '2'] },
+            { id: 'mouth', label: 'Рот', path: 'skinmake/head/mouth', options: ['none', '1', '2'] },
+            { id: 'mustache', label: 'Усы', path: 'skinmake/head/mustache', options: ['none', '1', '2'] },
+            { id: 'hair', label: 'Прическа', path: 'skinmake/head/hair', options: ['none', '1', '2', '3'] },
+            { id: 'hair2', label: 'Прическа 2', path: 'skinmake/head/hair2', options: ['none', '1', '2'] },
+            { id: 'jacket', label: 'Куртка', path: 'skinmake/body/jacket', options: ['none', '1', '2', '3'] }
+        ];
+
+        // Текущее состояние выбранных элементов
+        const state = {};
+        
+        const canvas = document.getElementById('skinCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Инициализация интерфейса
+        function init() {
+            const controlsContainer = document.getElementById('controls');
+
+            layersConfig.forEach(layer => {
+                state[layer.id] = layer.options[0]; // Выбираем первый элемент по умолчанию
+
+                const group = document.createElement('div');
+                group.className = 'control-group';
+
+                const label = document.createElement('label');
+                label.innerText = layer.label;
+
+                const select = document.createElement('select');
+                select.onchange = (e) => {
+                    state[layer.id] = e.target.value;
+                    renderSkin();
+                };
+
+                layer.options.forEach(opt => {
+                    const option = document.createElement('option');
+                    option.value = opt;
+                    option.innerText = opt === 'none' ? 'Отсутствует' : `Вариант ${opt}`;
+                    select.appendChild(option);
+                });
+
+                group.appendChild(label);
+                group.appendChild(select);
+                controlsContainer.appendChild(group);
+            });
+
+            renderSkin();
+        }
+
+        // Отрисовка скина
+        async function renderSkin() {
+            // Очищаем канвас перед новой отрисовкой
+            ctx.clearRect(0, 0, 64, 64);
+
+            // Создаем массив промисов для параллельной загрузки нужных картинок
+            const imagePromises = layersConfig.map(layer => {
+                const selectedOption = state[layer.id];
+                if (selectedOption === 'none') return Promise.resolve(null);
+
+                const imagePath = `${layer.path}/${selectedOption}.png`;
+                
+                return new Promise((resolve) => {
+                    const img = new Image();
+                    img.crossOrigin = "Anonymous"; // Требуется для безопасного экспорта канваса
+                    img.onload = () => resolve(img);
+                    img.onerror = () => resolve(null); // Если файла нет, просто пропускаем
+                    img.src = imagePath;
+                });
+            });
+
+            // Ждем загрузки всех изображений
+            const loadedImages = await Promise.all(imagePromises);
+
+            // Отрисовываем их строго в порядке слоев
+            loadedImages.forEach(img => {
+                if (img) {
+                    ctx.drawImage(img, 0, 0, 64, 64);
+                }
+            });
+        }
+
+        // Скачивание готового скина
+        function downloadSkin() {
+            const link = document.createElement('a');
+            link.download = 'custom_skin.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        // Запуск
+        init();
+    </script>
+</body>
+</html>
