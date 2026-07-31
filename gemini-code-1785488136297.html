@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0a0b10" />
+  <title>Custom Character Studio</title>
+  <style>
+    /* Базовые стили и переменные сохранены для приятного интерфейса */
+    :root {
+      --accent: #9c8cff;
+      --accent-rgb: 156, 140, 255;
+      --panel: rgba(17, 18, 26, 0.78);
+      --text: #f5f6fb;
+      --muted: #a9adbd;
+      --line: rgba(255, 255, 255, 0.10);
+      --shadow: 0 28px 80px rgba(0, 0, 0, 0.45);
+      --radius-lg: 22px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; color: var(--text); background: #08090d; font-family: system-ui, sans-serif; }
+    button { font: inherit; color: inherit; cursor: pointer; border: none; }
+    
+    .app { position: relative; width: 100%; height: 100%; }
+    #stage { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 2; cursor: grab; outline: none; }
+    #stage:active { cursor: grabbing; }
+
+    .topbar {
+      position: absolute; z-index: 20; top: 18px; left: 18px; right: 18px;
+      display: flex; justify-content: space-between; pointer-events: none;
+    }
+    .top-actions {
+      display: flex; gap: 8px; pointer-events: auto; background: rgba(14, 15, 22, 0.72);
+      padding: 6px; border-radius: 17px; border: 1px solid var(--line); backdrop-filter: blur(20px);
+    }
+    
+    .primary-btn {
+      height: 40px; padding: 0 15px; border-radius: 12px; font-size: 12px; font-weight: 700;
+      background: var(--accent); color: #fff; display: flex; align-items: center; gap: 8px;
+    }
+    .ghost-btn {
+      height: 40px; padding: 0 15px; border-radius: 12px; font-size: 12px;
+      background: rgba(255,255,255,0.1); color: var(--text);
+    }
+    .ghost-btn.active { background: var(--accent); color: #fff; }
+
+    .panel {
+      position: absolute; z-index: 15; top: 90px; bottom: 24px; width: 360px;
+      background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius-lg);
+      backdrop-filter: blur(24px); display: flex; flex-direction: column;
+      transition: transform 0.3s ease;
+    }
+    .scene-panel { left: 18px; }
+    .part-panel { right: 18px; transform: translateX(120%); opacity: 0; pointer-events: none; }
+    .part-panel.open { transform: translateX(0); opacity: 1; pointer-events: auto; }
+
+    .panel-head { padding: 20px; border-bottom: 1px solid var(--line); }
+    .panel-title { margin: 0; font-size: 20px; }
+    .eyebrow { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; }
+    
+    .panel-body { flex: 1; overflow-y: auto; padding: 18px; }
+    .section { margin-bottom: 20px; }
+    .section-title { font-size: 12px; font-weight: 700; margin-bottom: 10px; }
+    
+    .choice-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .choice {
+      padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid var(--line);
+      border-radius: 12px; text-align: center; font-size: 11px; transition: 0.2s;
+    }
+    .choice:hover { background: rgba(255,255,255,0.1); }
+    .choice.active { border-color: var(--accent); background: rgba(var(--accent-rgb), 0.15); }
+  </style>
+</head>
+<body>
+  <main class="app" id="app">
+    <canvas id="stage"></canvas>
+
+    <header class="topbar">
+      <div class="top-actions">
+        <!-- Кнопка скрытия второго слоя -->
+        <button class="ghost-btn" id="toggleLayerBtn" type="button">
+          👁️ Скрыть 2-й слой
+        </button>
+      </div>
+    </header>
+
+    <aside class="panel scene-panel">
+      <div class="panel-head">
+        <span class="eyebrow">Окружение и модель</span>
+        <h2 class="panel-title">Сцена</h2>
+      </div>
+      <div class="panel-body" id="scenePanelBody"></div>
+    </aside>
+
+    <aside class="panel part-panel" id="partPanel">
+      <div class="panel-head">
+        <span class="eyebrow" id="partEyebrow">Кастомизация</span>
+        <h2 class="panel-title" id="partTitle">Деталь</h2>
+      </div>
+      <div class="panel-body" id="partPanelBody"></div>
+    </aside>
+  </main>
+
+  <script type="module">
+    import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.js';
+
+    const $ = (s) => document.querySelector(s);
+    
+    // ============================================================================
+    // [ЗАМЕТКА]: КОНФИГУРАЦИЯ ПУТЕЙ И РЕСУРСОВ
+    // ============================================================================
+
+    // 1. Модели (загружаются по пути)
+    const MODELS = {
+      char1: { name: 'Персонаж 1', path: 'models/character_1.geo.json' },
+      char2: { name: 'Персонаж 2', path: 'models/character_2.geo.json' }
+    };
+
+    // 2. Анимации (пути для разных взаимодействий)
+    const ANIMATIONS = {
+      test: 'animations/animation.test.json',
+      head: 'animations/head_interact.json',
+      body: 'animations/body_interact.json',
+      leftArm: 'animations/arm_l_interact.json',
+      rightArm: 'animations/arm_r_interact.json',
+      leftLeg: 'animations/leg_l_interact.json',
+      rightLeg: 'animations/leg_r_interact.json'
+    };
+
+    // 3. Структура элементов (исключительно по имени для путей текстур)
+    // Текстуры берутся по паттерну: `parts/${category}/${itemName}.png`
+    const PART_CATEGORIES = {
+      head: [
+        { id: 'base', label: 'Основа', layer: 1, options: ['default', 'pale', 'dark'] },
+        { id: 'eyes', label: 'Глаза', layer: 1, options: ['blue', 'green', 'red'] },
+        { id: 'hat', label: 'Головной убор', layer: 2, options: ['none', 'cap', 'crown'] } // layer 2 отключается кнопкой
+      ],
+      body: [
+        { id: 'base', label: 'Торс', layer: 1, options: ['default'] },
+        { id: 'shirt', label: 'Рубашка', layer: 2, options: ['none', 'tshirt', 'jacket'] }
+      ]
+      // [ЗАМЕТКА]: Добавляй сюда arms и legs по аналогии
+    };
+
+    // ============================================================================
+    // СОСТОЯНИЕ (STATE)
+    // ============================================================================
+    let state = {
+      model: 'char1',
+      lighting: 'day',
+      hideSecondLayer: false,
+      parts: {
+        head_base: 'default', head_eyes: 'blue', head_hat: 'none',
+        body_base: 'default', body_shirt: 'tshirt'
+      }
+    };
+
+    let selectedPart = null;
+    const textureLoader = new THREE.TextureLoader();
+    let currentMixer = null;
+
+    // ============================================================================
+    // ИНИЦИАЛИЗАЦИЯ THREE.JS
+    // ============================================================================
+    const canvas = $('#stage');
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(0, 4, 12);
+
+    // ============================================================================
+    // СВЕТ (MINECRAFT STYLE)
+    // ============================================================================
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1);
+    scene.add(hemiLight);
+    
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+    dirLight.position.set(5, 10, 7);
+    scene.add(dirLight);
+
+    function applyLighting() {
+      // Полное отключение теней и установка базового света
+      renderer.shadowMap.enabled = state.lighting !== 'unlit';
+      
+      switch(state.lighting) {
+        case 'day':
+          scene.background = new THREE.Color(0x8cb8ff);
+          hemiLight.intensity = 0.8;
+          hemiLight.color.setHex(0xffffff);
+          dirLight.intensity = 2.5;
+          dirLight.color.setHex(0xffffff);
+          dirLight.position.set(5, 10, 7);
+          break;
+        case 'night':
+          scene.background = new THREE.Color(0x0b0e14);
+          hemiLight.intensity = 0.2;
+          hemiLight.color.setHex(0x445588);
+          dirLight.intensity = 0.5;
+          dirLight.color.setHex(0x6688cc);
+          dirLight.position.set(-5, 8, -5); // Луна
+          break;
+        case 'sunrise':
+          scene.background = new THREE.Color(0xffa066);
+          hemiLight.intensity = 0.5;
+          hemiLight.color.setHex(0xffccaa);
+          dirLight.intensity = 1.8;
+          dirLight.color.setHex(0xff8844);
+          dirLight.position.set(10, 2, 5); // Низкое солнце
+          break;
+        case 'unlit':
+          scene.background = new THREE.Color(0x222222);
+          hemiLight.intensity = 3.0; // Плоский белый свет
+          hemiLight.color.setHex(0xffffff);
+          dirLight.intensity = 0;
+          break;
+      }
+      
+      scene.traverse(child => {
+        if (child.isMesh) {
+          child.castShadow = renderer.shadowMap.enabled;
+          child.receiveShadow = renderer.shadowMap.enabled;
+        }
+      });
+    }
+
+    // ============================================================================
+    // ЗАГРУЗКА И СБОРКА ПЕРСОНАЖА
+    // ============================================================================
+    const characterGroup = new THREE.Group();
+    scene.add(characterGroup);
+    const meshesByLayer = { 1: [], 2: [] };
+    const clickTargets = [];
+
+    // [ЗАМЕТКА]: Заглушка парсера .geo.json. 
+    // Замени на реальный парсер Blockbench при интеграции.
+    async function loadGeoJsonModel(modelId) {
+      const url = MODELS[modelId].path;
+      console.log(`[Парсер] Загрузка модели из: ${url}`);
+      
+      // Очистка старой модели
+      characterGroup.clear();
+      meshesByLayer[1] = [];
+      meshesByLayer[2] = [];
+      clickTargets.length = 0;
+
+      // Имитация загруженной геометрии (кубы)
+      createMeshPart('head', new THREE.Vector3(2, 2, 2), new THREE.Vector3(0, 6, 0), 1);
+      createMeshPart('head_hat', new THREE.Vector3(2.2, 2.2, 2.2), new THREE.Vector3(0, 6, 0), 2); // Слой 2
+      
+      createMeshPart('body', new THREE.Vector3(2, 3, 1), new THREE.Vector3(0, 3.5, 0), 1);
+      createMeshPart('body_shirt', new THREE.Vector3(2.1, 3.1, 1.1), new THREE.Vector3(0, 3.5, 0), 2); // Слой 2
+      
+      applyTextures();
+      updateLayerVisibility();
+    }
+
+    function createMeshPart(name, size, pos, layer) {
+      const geo = new THREE.BoxGeometry(size.x, size.y, size.z);
+      const mat = new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, alphaTest: 0.5 });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.copy(pos);
+      mesh.name = name;
+      mesh.userData = { layer, partGroup: name.split('_')[0] }; // partGroup: 'head', 'body' и т.д.
+      
+      characterGroup.add(mesh);
+      meshesByLayer[layer].push(mesh);
+      if (layer === 1) clickTargets.push(mesh); // Кликаем только по базе
+    }
+
+    // Применение текстур по заданным путям (ИСКЛЮЧИТЕЛЬНО ПО ИМЕНИ)
+    function applyTextures() {
+      characterGroup.children.forEach(mesh => {
+        // Парсим имя меша (например, 'head' или 'head_hat')
+        const parts = mesh.name.split('_');
+        const group = parts[0]; 
+        const sub = parts[1] || 'base'; 
+        
+        const stateKey = `${group}_${sub}`;
+        const itemName = state[stateKey];
+        
+        if (itemName && itemName !== 'none') {
+          const path = `parts/${group}/${sub}/${itemName}.png`;
+          console.log(`[Текстуры] Подгрузка: ${path}`);
+          // mat.map = textureLoader.load(path); // Раскомментировать в рабочей среде
+          // mesh.material.needsUpdate = true;
+          mesh.visible = true;
+        } else if (itemName === 'none') {
+          mesh.visible = false;
+        }
+      });
+    }
+
+    function updateLayerVisibility() {
+      meshesByLayer[2].forEach(mesh => {
+        if (state.hideSecondLayer) {
+          mesh.visible = false;
+        } else {
+          // Проверяем, не выбран ли вариант "none" в состоянии
+          const stateKey = mesh.name; 
+          mesh.visible = state[stateKey] !== 'none';
+        }
+      });
+    }
+
+    // ============================================================================
+    // АНИМАЦИИ
+    // ============================================================================
+    function playAnimation(partGroup) {
+      const path = ANIMATIONS[partGroup] || ANIMATIONS.test;
+      console.log(`[Анимация] Триггер файла: ${path}`);
+      // Здесь код AnimationMixer для загрузки JSON
+      // currentMixer = new THREE.AnimationMixer(characterGroup);
+      // ...
+    }
+
+    // ============================================================================
+    // ИНТЕРФЕЙС И ВЗАИМОДЕЙСТВИЯ
+    // ============================================================================
+    
+    // Рендер панели сцены (Модель и Свет)
+    function renderScenePanel() {
+      const panel = $('#scenePanelBody');
+      panel.innerHTML = `
+        <div class="section">
+          <h3 class="section-title">Выбор модели</h3>
+          <div class="choice-grid">
+            ${Object.entries(MODELS).map(([id, m]) => `
+              <button class="choice ${state.model === id ? 'active' : ''}" onclick="setModel('${id}')">${m.name}</button>
+            `).join('')}
+          </div>
+        </div>
+        <div class="section">
+          <h3 class="section-title">Освещение</h3>
+          <div class="choice-grid">
+            <button class="choice ${state.lighting === 'day' ? 'active' : ''}" onclick="setLighting('day')">☀️ День</button>
+            <button class="choice ${state.lighting === 'night' ? 'active' : ''}" onclick="setLighting('night')">🌙 Ночь</button>
+            <button class="choice ${state.lighting === 'sunrise' ? 'active' : ''}" onclick="setLighting('sunrise')">🌅 Рассвет</button>
+            <button class="choice ${state.lighting === 'unlit' ? 'active' : ''}" onclick="setLighting('unlit')">Без света</button>
+          </div>
+        </div>
+      `;
+    }
+
+    // Рендер панели деталей
+    function renderPartPanel(partGroup) {
+      const config = PART_CATEGORIES[partGroup];
+      if (!config) return;
+
+      $('#partTitle').textContent = partGroup === 'head' ? 'Голова' : 'Торс';
+      
+      let html = '';
+      config.forEach(category => {
+        html += `
+          <div class="section">
+            <h3 class="section-title">${category.label}</h3>
+            <div class="choice-grid">
+              ${category.options.map(opt => {
+                const stateKey = `${partGroup}_${category.id}`;
+                const isActive = state[stateKey] === opt;
+                return `<button class="choice ${isActive ? 'active' : ''}" 
+                          onclick="setPartOption('${stateKey}', '${opt}')">${opt}</button>`;
+              }).join('')}
+            </div>
+          </div>
+        `;
+      });
+      $('#partPanelBody').innerHTML = html;
+    }
+
+    // Глобальные функции для UI
+    window.setModel = (id) => { state.model = id; loadGeoJsonModel(id); renderScenePanel(); };
+    window.setLighting = (type) => { state.lighting = type; applyLighting(); renderScenePanel(); };
+    window.setPartOption = (key, value) => { 
+      state.parts[key] = value; 
+      applyTextures(); 
+      updateLayerVisibility();
+      renderPartPanel(selectedPart); 
+    };
+
+    // Логика кнопки 2-го слоя
+    $('#toggleLayerBtn').addEventListener('click', (e) => {
+      state.hideSecondLayer = !state.hideSecondLayer;
+      e.target.classList.toggle('active', state.hideSecondLayer);
+      e.target.textContent = state.hideSecondLayer ? '👁️ Показать 2-й слой' : '👁️ Скрыть 2-й слой';
+      updateLayerVisibility();
+    });
+
+    // Клики по модели (Raycaster)
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+
+    window.addEventListener('pointerdown', (e) => {
+      if (e.target !== canvas) return;
+      mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+      
+      raycaster.setFromCamera(mouse, camera);
+      const intersects = raycaster.intersectObjects(clickTargets);
+      
+      if (intersects.length > 0) {
+        const group = intersects[0].object.userData.partGroup;
+        selectedPart = group;
+        $('#partPanel').classList.add('open');
+        renderPartPanel(group);
+        playAnimation(group); // Запуск индивидуальной анимации
+      } else {
+        selectedPart = null;
+        $('#partPanel').classList.remove('open');
+      }
+    });
+
+    // ============================================================================
+    // РЕНДЕР ЛУП
+    // ============================================================================
+    function animate() {
+      requestAnimationFrame(animate);
+      characterGroup.rotation.y += 0.005; // Легкое вращение для вида
+      renderer.render(scene, camera);
+    }
+
+    // Старт
+    loadGeoJsonModel(state.model);
+    applyLighting();
+    renderScenePanel();
+    animate();
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+</body>
+</html>
