@@ -32,54 +32,114 @@
             padding: 30px;
             border-radius: var(--border-radius);
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            max-width: 950px;
+            max-width: 980px;
             width: 100%;
             flex-wrap: wrap;
         }
 
         .controls {
             flex: 1;
-            min-width: 250px;
-            max-height: 500px;
-            overflow-y: auto;
-            padding-right: 10px;
+            min-width: 320px;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 15px;
         }
 
-        .controls::-webkit-scrollbar {
+        /* Вкладки категорий */
+        .tabs-container {
+            display: flex;
+            gap: 6px;
+            overflow-x: auto;
+            padding-bottom: 6px;
+            border-bottom: 1px solid #44475a;
+        }
+
+        .tabs-container::-webkit-scrollbar {
+            height: 4px;
+        }
+        .tabs-container::-webkit-scrollbar-thumb {
+            background: #6272a4;
+            border-radius: 2px;
+        }
+
+        .tab-btn {
+            background-color: #44475a;
+            color: var(--text-color);
+            border: none;
+            padding: 8px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85em;
+            font-weight: 600;
+            white-space: nowrap;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .tab-btn:hover {
+            background-color: #6272a4;
+        }
+
+        .tab-btn.active {
+            background-color: var(--accent-color);
+            color: #282a36;
+        }
+
+        /* Сетка выбора элементов */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+            gap: 12px;
+            max-height: 360px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .grid-container::-webkit-scrollbar {
             width: 6px;
         }
-        .controls::-webkit-scrollbar-thumb {
+        .grid-container::-webkit-scrollbar-thumb {
             background: #6272a4;
             border-radius: 3px;
         }
 
-        .control-group {
+        .grid-card {
+            background-color: #313342;
+            border: 2px solid #44475a;
+            border-radius: 8px;
+            padding: 8px;
             display: flex;
             flex-direction: column;
-            gap: 4px;
-        }
-
-        label {
-            font-size: 0.85em;
-            font-weight: 600;
-            color: #8be9fd;
-        }
-
-        select {
-            padding: 8px;
-            background-color: #44475a;
-            color: var(--text-color);
-            border: 1px solid #6272a4;
-            border-radius: 4px;
-            outline: none;
+            align-items: center;
+            gap: 6px;
             cursor: pointer;
+            transition: all 0.2s;
         }
 
-        select:focus {
+        .grid-card:hover {
+            border-color: #8be9fd;
+            transform: translateY(-2px);
+        }
+
+        .grid-card.selected {
             border-color: var(--accent-color);
+            background-color: #3a3d52;
+            box-shadow: 0 0 10px rgba(189, 147, 249, 0.3);
+        }
+
+        .grid-card canvas {
+            width: 64px;
+            height: 64px;
+            background-color: #1e1e2e;
+            border-radius: 4px;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+
+        .grid-card span {
+            font-size: 0.75em;
+            font-weight: 600;
+            color: var(--text-color);
+            text-align: center;
         }
 
         .preview-section {
@@ -143,12 +203,13 @@
 <body>
 
     <div class="container">
-        <div class="controls" id="controls">
-            <!-- Селекторы генерируются через JS -->
+        <!-- Наглядное меню с вкладками и сеткой -->
+        <div class="controls">
+            <div class="tabs-container" id="tabsContainer"></div>
+            <div class="grid-container" id="gridContainer"></div>
         </div>
 
         <div class="preview-section">
-            <!-- Канвас под 3D-просмотрщик skinview3d -->
             <canvas id="skin_container"></canvas>
             
             <div class="button-group">
@@ -158,16 +219,14 @@
         </div>
     </div>
 
-    <!-- Скрытый холст для программной склейки слоев в PNG 64x64 -->
+    <!-- Скрытый холст для финальной сборки текстуры 64x64 -->
     <canvas id="hiddenCanvas" width="64" height="64" style="display:none;"></canvas>
 
-    <!-- Подключаем библиотеку skinview3d через ESM CDN (без сборщиков) -->
     <script type="module">
         import * as skinview3d from 'https://cdn.jsdelivr.net/npm/skinview3d@3.4.2/+esm';
 
-        // Конфигурация слоев проекта
         const layersConfig = [
-            { id: 'skin', label: 'Цвет кожи', path: 'skinmake/skin', options: ['1', '2', '3'] },
+            { id: 'skin', label: 'Кожа', path: 'skinmake/skin', options: ['1', '2', '3'] },
             { id: 'eyes', label: 'Глаза', path: 'skinmake/head/eyes', options: ['none', '1', '2', '3'] },
             { id: 'nose', label: 'Нос', path: 'skinmake/head/nose', options: ['none', '1', '2'] },
             { id: 'mouth', label: 'Рот', path: 'skinmake/head/mouth', options: ['none', '1', '2'] },
@@ -178,13 +237,13 @@
         ];
 
         const state = {};
+        let activeTab = 'skin';
         let skinViewer = null;
         let isAnimated = true;
 
         const hiddenCanvas = document.getElementById('hiddenCanvas');
         const ctx = hiddenCanvas.getContext('2d');
 
-        // Инициализация 3D сцены
         function initViewer() {
             skinViewer = new skinview3d.SkinViewer({
                 canvas: document.getElementById('skin_container'),
@@ -193,84 +252,139 @@
                 skin: null
             });
 
-            // Настройки отображения
             skinViewer.autoRotate = true;
             skinViewer.autoRotateSpeed = 1.5;
-            skinViewer.animation = new skinview3d.WalkingAnimation(); // Включаем ходьбу по умолчанию
+            skinViewer.animation = new skinview3d.WalkingAnimation();
             skinViewer.animation.speed = 1.0;
-
-            // Настройка освещения
             skinViewer.globalLight.intensity = 1.2;
             skinViewer.cameraLight.intensity = 0.4;
         }
 
-        // Создание элементов управления в интерфейсе
         function initUI() {
-            const controlsContainer = document.getElementById('controls');
-
             layersConfig.forEach(layer => {
                 state[layer.id] = layer.options[0];
+            });
 
-                const group = document.createElement('div');
-                group.className = 'control-group';
+            renderTabs();
+            renderGrid();
+        }
 
-                const label = document.createElement('label');
-                label.innerText = layer.label;
+        // Отрисовка шапки с вкладками
+        function renderTabs() {
+            const tabsContainer = document.getElementById('tabsContainer');
+            tabsContainer.innerHTML = '';
 
-                const select = document.createElement('select');
-                select.onchange = (e) => {
-                    state[layer.id] = e.target.value;
-                    updateSkin();
+            layersConfig.forEach(layer => {
+                const btn = document.createElement('button');
+                btn.className = `tab-btn ${activeTab === layer.id ? 'active' : ''}`;
+                btn.innerText = layer.label;
+                btn.onclick = () => {
+                    activeTab = layer.id;
+                    renderTabs();
+                    renderGrid();
                 };
-
-                layer.options.forEach(opt => {
-                    const option = document.createElement('option');
-                    option.value = opt;
-                    option.innerText = opt === 'none' ? 'Отсутствует' : `Вариант ${opt}`;
-                    select.appendChild(option);
-                });
-
-                group.appendChild(label);
-                group.appendChild(select);
-                controlsContainer.appendChild(group);
+                tabsContainer.appendChild(btn);
             });
         }
 
-        // Перерисовка текстуры и обновление 3D-модели
+        // Отрисовка сетки выбора элементов текущей вкладки
+        async function renderGrid() {
+            const gridContainer = document.getElementById('gridContainer');
+            gridContainer.innerHTML = '';
+
+            const currentLayer = layersConfig.find(l => l.id === activeTab);
+            if (!currentLayer) return;
+
+            for (const opt of currentLayer.options) {
+                const card = document.createElement('div');
+                card.className = `grid-card ${state[activeTab] === opt ? 'selected' : ''}`;
+                card.onclick = () => {
+                    state[activeTab] = opt;
+                    updateSkin();
+                    renderGrid();
+                };
+
+                const cardCanvas = document.createElement('canvas');
+                cardCanvas.width = 64;
+                cardCanvas.height = 64;
+
+                const span = document.createElement('span');
+                span.innerText = opt === 'none' ? 'Пусто' : `Вариант ${opt}`;
+
+                card.appendChild(cardCanvas);
+                card.appendChild(span);
+                gridContainer.appendChild(card);
+
+                // Генерация мини-превью для карточки (показывает лицо/торс с этим элементом)
+                drawCardPreview(currentLayer, opt, cardCanvas);
+            }
+        }
+
+        // Функция формирования мини-превью в карточке сетки
+        async function drawCardPreview(targetLayer, optionValue, targetCanvas) {
+            const ctxCard = targetCanvas.getContext('2d');
+            ctxCard.imageSmoothingEnabled = false;
+
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = 64;
+            tempCanvas.height = 64;
+            const tempCtx = tempCanvas.getContext('2d');
+
+            const imagePromises = layersConfig.map(l => {
+                const val = (l.id === targetLayer.id) ? optionValue : state[l.id];
+                if (val === 'none') return Promise.resolve(null);
+
+                return new Promise((resolve) => {
+                    const img = new Image();
+                    img.crossOrigin = "Anonymous";
+                    img.onload = () => resolve(img);
+                    img.onerror = () => resolve(null);
+                    img.src = `${l.path}/${val}.png`;
+                });
+            });
+
+            const loadedImages = await Promise.all(imagePromises);
+            loadedImages.forEach(img => {
+                if (img) tempCtx.drawImage(img, 0, 0, 64, 64);
+            });
+
+            // Для куртки выводим торс, для остальных элементов — голову
+            if (targetLayer.id === 'jacket') {
+                ctxCard.drawImage(tempCanvas, 20, 20, 8, 12, 16, 8, 32, 48);
+                ctxCard.drawImage(tempCanvas, 20, 36, 8, 12, 16, 8, 32, 48);
+            } else {
+                ctxCard.drawImage(tempCanvas, 8, 8, 8, 8, 0, 0, 64, 64);
+                ctxCard.drawImage(tempCanvas, 40, 8, 8, 8, 0, 0, 64, 64);
+            }
+        }
+
+        // Общая сборка скина и передача в 3D-вьювер
         window.updateSkin = async function() {
             ctx.clearRect(0, 0, 64, 64);
 
             const imagePromises = layersConfig.map(layer => {
                 const selectedOption = state[layer.id];
                 if (selectedOption === 'none') return Promise.resolve(null);
-
-                const imagePath = `${layer.path}/${selectedOption}.png`;
                 
                 return new Promise((resolve) => {
                     const img = new Image();
                     img.crossOrigin = "Anonymous";
                     img.onload = () => resolve(img);
                     img.onerror = () => resolve(null);
-                    img.src = imagePath;
+                    img.src = `${layer.path}/${selectedOption}.png`;
                 });
             });
 
             const loadedImages = await Promise.all(imagePromises);
-
-            // Наложение слоев друг на друга в правильном порядке
             loadedImages.forEach(img => {
-                if (img) {
-                    ctx.drawImage(img, 0, 0, 64, 64);
-                }
+                if (img) ctx.drawImage(img, 0, 0, 64, 64);
             });
 
-            // Передаем итоговый холст как текстуру в 3D-просмотрщик
             if (skinViewer) {
                 skinViewer.loadSkin(hiddenCanvas.toDataURL());
             }
         }
 
-        // Скачивание готового скина
         window.downloadSkin = function() {
             const link = document.createElement('a');
             link.download = 'custom_skin.png';
@@ -278,7 +392,6 @@
             link.click();
         }
 
-        // Переключение анимации (Ходьба / Статика)
         window.toggleAnimation = function() {
             isAnimated = !isAnimated;
             const btn = document.getElementById('animToggle');
@@ -291,7 +404,6 @@
             }
         }
 
-        // Запуск приложения
         initViewer();
         initUI();
         updateSkin();
