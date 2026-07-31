@@ -3,19 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LEGENDARY MINECRAFT SKIN FORGE</title>
+    <title>LEGENDARY MINECRAFT SKIN FORGE - ULTIMATE</title>
     <style>
         :root {
-            --bg-void: #050508;
-            --panel-bg: #0f0e17;
-            --panel-border: #2a2740;
+            --bg-void: #030305;
+            --panel-bg: #0b0a10;
+            --panel-border: #1f1c30;
+            --panel-border-glow: #3f3868;
             --gold: #f59e0b;
             --gold-glow: rgba(245, 158, 11, 0.4);
             --neon-purple: #8b5cf6;
             --neon-cyan: #06b6d4;
+            --neon-pink: #ec4899;
             --text-main: #f3f4f6;
             --text-muted: #9ca3af;
-            --danger: #ef4444;
+            --success: #10b981;
         }
 
         * {
@@ -35,27 +37,35 @@
             display: flex;
             flex-direction: column;
             background-image: 
-                radial-gradient(circle at 20% 20%, rgba(139, 92, 246, 0.08) 0%, transparent 40%),
-                radial-gradient(circle at 80% 80%, rgba(245, 158, 11, 0.06) 0%, transparent 40%);
+                radial-gradient(circle at 10% 10%, rgba(139, 92, 246, 0.07) 0%, transparent 40%),
+                radial-gradient(circle at 90% 90%, rgba(245, 158, 11, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, rgba(6, 182, 212, 0.04) 0%, transparent 60%);
         }
 
-        /* Эпическая шапка */
+        /* Эпическая шапка с бейджами и быстрыми функциями */
         header {
             height: 70px;
-            background: rgba(15, 14, 23, 0.9);
+            background: rgba(11, 10, 16, 0.95);
+            backdrop-filter: blur(10px);
             border-bottom: 2px solid var(--panel-border);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 40px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-            z-index: 10;
+            padding: 0 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.9);
+            z-index: 20;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
 
         .logo-title {
-            font-size: 1.4rem;
+            font-size: 1.3rem;
             font-weight: 900;
-            letter-spacing: 3px;
+            letter-spacing: 2px;
             background: linear-gradient(135deg, #fff, var(--gold));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -63,50 +73,103 @@
             text-transform: uppercase;
         }
 
-        .header-stats {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            letter-spacing: 1px;
-            border: 1px dashed var(--panel-border);
-            padding: 6px 14px;
+        .badge-pill {
+            background: rgba(139, 92, 246, 0.15);
+            border: 1px solid var(--neon-purple);
+            color: #d8b4fe;
+            padding: 4px 10px;
             border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
-        /* Главная рабочая область на весь экран */
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .top-action-btn {
+            background: #171526;
+            border: 1px solid var(--panel-border);
+            color: var(--text-main);
+            padding: 8px 14px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .top-action-btn:hover {
+            border-color: var(--gold);
+            color: var(--gold);
+            transform: translateY(-1px);
+        }
+
+        .top-action-btn.random {
+            background: linear-gradient(135deg, rgba(236, 72, 153, 0.2), rgba(139, 92, 246, 0.2));
+            border-color: var(--neon-pink);
+        }
+
+        /* Рабочая область */
         .workspace {
             flex: 1;
             display: grid;
-            grid-template-columns: 420px 1fr;
+            grid-template-columns: 440px 1fr;
             height: calc(100vh - 70px);
             overflow: hidden;
         }
 
-        /* Левая панель арсенала (Вкладки + Сетка) */
+        /* Левая панель арсенала */
         .arsenal-panel {
-            background: rgba(15, 14, 23, 0.95);
+            background: rgba(11, 10, 16, 0.98);
             border-right: 2px solid var(--panel-border);
             display: flex;
             flex-direction: column;
             padding: 20px;
-            gap: 20px;
+            gap: 16px;
             z-index: 5;
+            box-shadow: 10px 0 30px rgba(0,0,0,0.5);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
         }
 
         .section-title {
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             text-transform: uppercase;
             letter-spacing: 2px;
             color: var(--gold);
-            margin-bottom: 8px;
-            font-weight: 700;
+            font-weight: 800;
         }
 
-        /* Вкладки категорий */
+        .layer-counter {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            background: #171526;
+            padding: 2px 8px;
+            border-radius: 6px;
+            border: 1px solid var(--panel-border);
+        }
+
+        /* Вкладки категорий со стильными плашками */
         .tabs-container {
             display: flex;
             gap: 8px;
             overflow-x: auto;
-            padding-bottom: 6px;
+            padding-bottom: 8px;
         }
 
         .tabs-container::-webkit-scrollbar {
@@ -118,31 +181,49 @@
         }
 
         .tab-btn {
-            background: #171526;
+            background: #141220;
             color: var(--text-muted);
             border: 1px solid var(--panel-border);
-            padding: 10px 16px;
-            border-radius: 10px;
+            padding: 10px 14px;
+            border-radius: 12px;
             cursor: pointer;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             font-weight: 700;
             white-space: nowrap;
-            transition: all 0.2s ease;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
         }
 
         .tab-btn:hover {
-            border-color: var(--neon-purple);
+            border-color: var(--panel-border-glow);
             color: var(--text-main);
         }
 
         .tab-btn.active {
-            background: linear-gradient(135deg, var(--neon-purple), #6366f1);
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.25), rgba(99, 102, 241, 0.25));
             color: #fff;
-            border-color: transparent;
-            box-shadow: 0 0 15px rgba(139, 92, 246, 0.4);
+            border-color: var(--neon-purple);
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.3);
         }
 
-        /* Сетка выбора элементов (Картинки без сглаживания) */
+        .tab-status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--panel-border);
+            margin-top: 2px;
+        }
+
+        .tab-btn.has-selection .tab-status-dot {
+            background: var(--success);
+            box-shadow: 0 0 6px var(--success);
+        }
+
+        /* Сетка элементов */
         .grid-container {
             flex: 1;
             display: grid;
@@ -161,9 +242,9 @@
         }
 
         .grid-card {
-            background: #13121d;
+            background: #100e18;
             border: 2px solid var(--panel-border);
-            border-radius: 12px;
+            border-radius: 14px;
             padding: 10px;
             display: flex;
             flex-direction: column;
@@ -171,36 +252,35 @@
             justify-content: center;
             gap: 8px;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
         }
 
         .grid-card:hover {
             border-color: var(--gold);
             transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.15);
+            box-shadow: 0 6px 20px rgba(245, 158, 11, 0.15);
         }
 
         .grid-card.selected {
             border-color: var(--gold);
-            background: linear-gradient(135deg, #221d28, #191624);
+            background: linear-gradient(135deg, #221c2e, #141120);
             box-shadow: 0 0 20px var(--gold-glow);
         }
 
-        /* Четкие пиксельные превью без размытия */
         .grid-card canvas {
-            width: 72px;
-            height: 72px;
-            background: #09080e;
-            border-radius: 8px;
+            width: 76px;
+            height: 76px;
+            background: #060508;
+            border-radius: 10px;
             image-rendering: pixelated;
             image-rendering: crisp-edges;
             border: 1px solid var(--panel-border);
         }
 
         .grid-card span {
-            font-size: 0.75rem;
-            font-weight: 600;
+            font-size: 0.72rem;
+            font-weight: 700;
             color: var(--text-muted);
             letter-spacing: 0.5px;
         }
@@ -208,61 +288,86 @@
             color: var(--gold);
         }
 
-        /* Правая зона: 3D Вьювер и Эпическое Управление */
+        .card-badge {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            font-size: 0.6rem;
+            background: rgba(0,0,0,0.6);
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid var(--panel-border);
+            color: var(--text-muted);
+        }
+        .grid-card.selected .card-badge {
+            background: var(--gold);
+            color: #030305;
+            border-color: var(--gold);
+            font-weight: 800;
+        }
+
+        /* Правая зона вьювера и пафосного управления */
         .viewport-section {
             position: relative;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            background: radial-gradient(circle at center, #141221 0%, #07060a 100%);
-            padding: 30px;
+            background: radial-gradient(circle at center, #110e1d 0%, #030305 100%);
+            padding: 20px;
+            overflow: hidden;
         }
 
         #skin_container {
             width: 100%;
             height: 100%;
-            max-width: 650px;
-            max-height: 650px;
+            max-width: 700px;
+            max-height: 700px;
             cursor: grab;
-            filter: drop-shadow(0 20px 40px rgba(0,0,0,0.9));
+            filter: drop-shadow(0 25px 50px rgba(0,0,0,0.9));
         }
         #skin_container:active {
             cursor: grabbing;
         }
 
-        /* Панель управления снизу справа/по центру */
+        /* Плавающие панели управления / Доки */
         .control-dock {
             position: absolute;
-            bottom: 30px;
+            bottom: 25px;
             display: flex;
-            gap: 15px;
-            background: rgba(15, 14, 23, 0.85);
-            backdrop-filter: blur(12px);
+            gap: 12px;
+            background: rgba(11, 10, 16, 0.9);
+            backdrop-filter: blur(16px);
             border: 2px solid var(--panel-border);
-            padding: 16px 24px;
+            padding: 14px 20px;
             border-radius: 20px;
-            box-shadow: 0 15px 40px rgba(0,0,0,0.8);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.9);
             z-index: 10;
             align-items: center;
             flex-wrap: wrap;
             justify-content: center;
         }
 
+        .control-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
         .epic-btn {
-            background: #1c1a29;
+            background: #151322;
             color: var(--text-main);
             border: 2px solid var(--panel-border);
-            padding: 12px 20px;
+            padding: 10px 16px;
             border-radius: 12px;
             font-weight: 700;
-            font-size: 0.85rem;
-            letter-spacing: 1px;
+            font-size: 0.8rem;
+            letter-spacing: 0.5px;
             cursor: pointer;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             text-transform: uppercase;
         }
 
@@ -270,73 +375,131 @@
             border-color: var(--gold);
             color: var(--gold);
             transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(245, 158, 11, 0.2);
+            box-shadow: 0 5px 15px rgba(245, 158, 11, 0.2);
         }
 
         .epic-btn.active-mode {
             background: var(--gold);
-            color: #050508;
+            color: #030305;
             border-color: var(--gold);
             box-shadow: 0 0 20px var(--gold-glow);
         }
 
         .epic-btn.primary {
             background: linear-gradient(135deg, var(--gold), #d97706);
-            color: #050508;
+            color: #030305;
             border-color: transparent;
-            font-size: 0.95rem;
-            padding: 14px 28px;
+            font-size: 0.9rem;
+            padding: 12px 24px;
             box-shadow: 0 0 25px var(--gold-glow);
         }
         .epic-btn.primary:hover {
             filter: brightness(1.15);
-            color: #050508;
+            color: #030305;
         }
 
         .divider {
             width: 2px;
-            height: 35px;
+            height: 30px;
             background: var(--panel-border);
-            margin: 0 5px;
+            margin: 0 4px;
+        }
+
+        /* Дополнительные плашки состояния освещения / HUD в углу */
+        .hud-overlay {
+            position: absolute;
+            top: 25px;
+            right: 25px;
+            display: flex;
+            gap: 10px;
+            z-index: 10;
+        }
+
+        .hud-badge {
+            background: rgba(11, 10, 16, 0.8);
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--panel-border);
+            padding: 8px 14px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .hud-badge:hover {
+            border-color: var(--neon-cyan);
+            color: var(--text-main);
+        }
+        .hud-badge span.dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--neon-cyan);
+            box-shadow: 0 0 8px var(--neon-cyan);
         }
     </style>
 </head>
 <body>
 
     <header>
-        <div class="logo-title">⚡ Minecraft Skin Forge</div>
-        <div class="header-stats">Режим: HD 3D Пространство • Пиксели хрустальные</div>
+        <div class="logo-container">
+            <div class="logo-title">⚡ Minecraft Skin Forge</div>
+            <div class="badge-pill"><span>✨</span> Ultimate Edition</div>
+        </div>
+        <div class="header-actions">
+            <button class="top-action-btn random" onclick="randomizeSkin()">🎲 Случайный скин</button>
+            <button class="top-action-btn" onclick="resetSkin()">🗑️ Очистить всё</button>
+        </div>
     </header>
 
     <div class="workspace">
-        <!-- Левая панель выбора слоев -->
+        <!-- Левая панель -->
         <div class="arsenal-panel">
             <div>
-                <div class="section-title">Категории слоев</div>
+                <div class="section-header">
+                    <div class="section-title">Категории слоев</div>
+                    <div class="layer-counter" id="activeLayersCount">0/8 активно</div>
+                </div>
                 <div class="tabs-container" id="tabsContainer"></div>
             </div>
             
             <div style="flex:1; display: flex; flex-direction: column; overflow: hidden;">
-                <div class="section-title" id="activeCategoryTitle">Варианты</div>
+                <div class="section-header">
+                    <div class="section-title" id="activeCategoryTitle">Варианты</div>
+                </div>
                 <div class="grid-container" id="gridContainer"></div>
             </div>
         </div>
 
-        <!-- Правая часть с 3D моделью и эпической панелью управления -->
+        <!-- Правая зона: 3D Вьювер и Эпический HUD -->
         <div class="viewport-section">
+            <div class="hud-overlay">
+                <div class="hud-badge" onclick="cycleLighting()"><span class="dot" id="lightDot"></span> Свет: <span id="lightModeName">Студийный</span></div>
+                <div class="hud-badge" onclick="toggleCameraFOV()">🔭 FOV: <span id="fovValue">50°</span></div>
+            </div>
+
             <canvas id="skin_container"></canvas>
 
             <div class="control-dock">
-                <button class="epic-btn active-mode" id="animToggle" onclick="toggleAnimation()">🚶 Плавная ходьба</button>
-                <button class="epic-btn active-mode" id="rotToggle" onclick="toggleRotation()">🔄 Вращение</button>
-                <button class="epic-btn" id="armToggle" onclick="toggleArmThickness()">💪 Руки: Стандарт</button>
+                <div class="control-group">
+                    <button class="epic-btn active-mode" id="animToggle" onclick="cycleAnimation()">🚶 Ходьба</button>
+                    <button class="epic-btn active-mode" id="rotToggle" onclick="toggleRotation()">🔄 Вращение</button>
+                </div>
+                <div class="divider"></div>
+                <div class="control-group">
+                    <button class="epic-btn" id="armToggle" onclick="toggleArmThickness()">💪 Руки: Стандарт</button>
+                </div>
                 <div class="divider"></div>
                 <button class="epic-btn primary" onclick="downloadSkin()">📥 Извлечь скин</button>
             </div>
         </div>
     </div>
 
-    <!-- Скрытый холст для финальной сборки текстуры 64x64 -->
+    <!-- Скрытый холст для сборки текстуры 64x64 -->
     <canvas id="hiddenCanvas" width="64" height="64" style="display:none;"></canvas>
 
     <script type="module">
@@ -356,9 +519,11 @@
         const state = {};
         let activeTab = 'skin';
         let skinViewer = null;
-        let isAnimated = true;
+        let animMode = 1; // 0: Стоп, 1: Ходьба, 2: Бег
         let isRotating = true;
-        let isSlimArms = false; // false = default (4px), true = slim/Alex (3px)
+        let isSlimArms = false;
+        let lightingPreset = 0; // 0: Студийный, 1: Неон, 2: Мрачный Воид
+        let currentFov = 50;
 
         const hiddenCanvas = document.getElementById('hiddenCanvas');
         const ctx = hiddenCanvas.getContext('2d');
@@ -367,20 +532,19 @@
             const container = document.getElementById('skin_container');
             skinViewer = new skinview3d.SkinViewer({
                 canvas: container,
-                width: container.clientWidth || 500,
-                height: container.clientHeight || 500,
+                width: container.clientWidth || 600,
+                height: container.clientHeight || 600,
                 skin: null
             });
 
             skinViewer.autoRotate = true;
             skinViewer.autoRotateSpeed = 1.2;
             skinViewer.animation = new skinview3d.WalkingAnimation();
-            skinViewer.animation.speed = 0.4; // Медленная, плавная и величественная ходьба
+            skinViewer.animation.speed = 0.4;
             skinViewer.globalLight.intensity = 1.3;
             skinViewer.cameraLight.intensity = 0.5;
-            skinViewer.fov = 50;
+            skinViewer.fov = currentFov;
 
-            // Автоматическое масштабирование при изменении размера окна
             window.addEventListener('resize', () => {
                 skinViewer.width = container.clientWidth;
                 skinViewer.height = container.clientHeight;
@@ -394,6 +558,15 @@
 
             renderTabs();
             renderGrid();
+            updateActiveLayersCount();
+        }
+
+        function updateActiveLayersCount() {
+            let activeCount = 0;
+            layersConfig.forEach(l => {
+                if (state[l.id] !== 'none' && l.id !== 'skin') activeCount++;
+            });
+            document.getElementById('activeLayersCount').innerText = `${activeCount}/7 доп. слоев`;
         }
 
         function renderTabs() {
@@ -402,17 +575,23 @@
 
             layersConfig.forEach(layer => {
                 const btn = document.createElement('button');
-                btn.className = `tab-btn ${activeTab === layer.id ? 'active' : ''}`;
-                btn.innerText = layer.label;
+                const hasSel = state[layer.id] !== 'none';
+                btn.className = `tab-btn ${activeTab === layer.id ? 'active' : ''} ${hasSel ? 'has-selection' : ''}`;
+                
+                btn.innerHTML = `
+                    <span>${layer.label}</span>
+                    <span class="tab-status-dot"></span>
+                `;
+
                 btn.onclick = () => {
                     activeTab = layer.id;
-                    document.getElementById('activeCategoryTitle').innerText = `Выбор: ${layer.label}`;
+                    document.getElementById('activeCategoryTitle').innerText = `Варианты: ${layer.label}`;
                     renderTabs();
                     renderGrid();
                 };
                 tabsContainer.appendChild(btn);
             });
-            document.getElementById('activeCategoryTitle').innerText = `Выбор: ${layersConfig.find(l => l.id === activeTab).label}`;
+            document.getElementById('activeCategoryTitle').innerText = `Варианты: ${layersConfig.find(l => l.id === activeTab).label}`;
         }
 
         async function renderGrid() {
@@ -423,12 +602,15 @@
             if (!currentLayer) return;
 
             for (const opt of currentLayer.options) {
+                const isSelected = state[activeTab] === opt;
                 const card = document.createElement('div');
-                card.className = `grid-card ${state[activeTab] === opt ? 'selected' : ''}`;
+                card.className = `grid-card ${isSelected ? 'selected' : ''}`;
                 card.onclick = () => {
                     state[activeTab] = opt;
                     updateSkin();
+                    renderTabs();
                     renderGrid();
+                    updateActiveLayersCount();
                 };
 
                 const cardCanvas = document.createElement('canvas');
@@ -438,11 +620,15 @@
                 const span = document.createElement('span');
                 span.innerText = opt === 'none' ? 'ПУСТО' : `СТИЛЬ #${opt}`;
 
+                const badge = document.createElement('div');
+                badge.className = 'card-badge';
+                badge.innerText = isSelected ? 'АКТИВНО' : opt;
+
+                card.appendChild(badge);
                 card.appendChild(cardCanvas);
                 card.appendChild(span);
                 gridContainer.appendChild(card);
 
-                // Отрисовка четкого пиксельного превью элемента
                 drawCardPreview(currentLayer, opt, cardCanvas);
             }
         }
@@ -475,7 +661,6 @@
                 if (img) tempCtx.drawImage(img, 0, 0, 64, 64);
             });
 
-            // Крупное детализированное пиксельное превью части лица или торса
             if (targetLayer.id === 'jacket') {
                 ctxCard.drawImage(tempCanvas, 20, 20, 8, 12, 16, 8, 32, 48);
                 ctxCard.drawImage(tempCanvas, 20, 36, 8, 12, 16, 8, 32, 48);
@@ -508,11 +693,31 @@
             });
 
             if (skinViewer) {
-                // Передаем текстуру с учетом выбранного типа модели рук (slim / default)
                 skinViewer.loadSkin(hiddenCanvas.toDataURL(), {
                     model: isSlimArms ? "slim" : "default"
                 });
             }
+        }
+
+        window.randomizeSkin = function() {
+            layersConfig.forEach(layer => {
+                const randomIndex = Math.floor(Math.random() * layer.options.length);
+                state[layer.id] = layer.options[randomIndex];
+            });
+            updateSkin();
+            renderTabs();
+            renderGrid();
+            updateActiveLayersCount();
+        }
+
+        window.resetSkin = function() {
+            layersConfig.forEach((layer, idx) => {
+                state[layer.id] = idx === 0 ? layer.options[0] : 'none';
+            });
+            updateSkin();
+            renderTabs();
+            renderGrid();
+            updateActiveLayersCount();
         }
 
         window.downloadSkin = function() {
@@ -522,18 +727,23 @@
             link.click();
         }
 
-        window.toggleAnimation = function() {
-            isAnimated = !isAnimated;
+        window.cycleAnimation = function() {
+            animMode = (animMode + 1) % 3;
             const btn = document.getElementById('animToggle');
-            if (isAnimated) {
+            if (animMode === 0) {
+                skinViewer.animation = null;
+                btn.classList.remove('active-mode');
+                btn.innerText = "🚶 Стоп анимация";
+            } else if (animMode === 1) {
                 skinViewer.animation = new skinview3d.WalkingAnimation();
                 skinViewer.animation.speed = 0.4;
                 btn.classList.add('active-mode');
-                btn.innerText = "🚶 Плавная ходьба";
-            } else {
-                skinViewer.animation = null;
-                btn.classList.remove('active-mode');
-                btn.innerText = "🚶 Стоп ходьба";
+                btn.innerText = "🚶 Ходьба";
+            } else if (animMode === 2) {
+                skinViewer.animation = new skinview3d.RunningAnimation();
+                skinViewer.animation.speed = 0.8;
+                btn.classList.add('active-mode');
+                btn.innerText = "🏃 Бег";
             }
         }
 
@@ -556,12 +766,40 @@
             const btn = document.getElementById('armToggle');
             if (isSlimArms) {
                 btn.classList.add('active-mode');
-                btn.innerText = "💪 Руки: Тонкие (Alex)";
+                btn.innerText = "💪 Руки: Тонкие";
             } else {
                 btn.classList.remove('active-mode');
-                btn.innerText = "💪 Руки: Стандарт (Steve)";
+                btn.innerText = "💪 Руки: Стандарт";
             }
             updateSkin();
+        }
+
+        window.cycleLighting = function() {
+            lightingPreset = (lightingPreset + 1) % 3;
+            const nameEl = document.getElementById('lightModeName');
+            const dotEl = document.getElementById('lightDot');
+            if (lightingPreset === 0) {
+                skinViewer.globalLight.intensity = 1.3;
+                skinViewer.cameraLight.intensity = 0.5;
+                nameEl.innerText = "Студийный";
+                dotEl.style.background = "var(--neon-cyan)";
+            } else if (lightingPreset === 1) {
+                skinViewer.globalLight.intensity = 2.0;
+                skinViewer.cameraLight.intensity = 0.9;
+                nameEl.innerText = "Неоновый";
+                dotEl.style.background = "var(--neon-pink)";
+            } else if (lightingPreset === 2) {
+                skinViewer.globalLight.intensity = 0.6;
+                skinViewer.cameraLight.intensity = 0.2;
+                nameEl.innerText = "Мрачный Воид";
+                dotEl.style.background = "var(--gold)";
+            }
+        }
+
+        window.toggleCameraFOV = function() {
+            currentFov = currentFov === 50 ? 35 : (currentFov === 35 ? 70 : 50);
+            skinViewer.fov = currentFov;
+            document.getElementById('fovValue').innerText = `${currentFov}°`;
         }
 
         initViewer();
