@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minecraft Skin Studio Pro</title>
+    <title>Minecraft Skin Studio - Live Edition</title>
     <style>
         :root {
             --bg-base: #09090b;
@@ -13,7 +13,6 @@
             --accent-hover: #4f46e5;
             --text-main: #f4f4f5;
             --text-muted: #a1a1aa;
-            --success: #10b981;
         }
 
         * {
@@ -34,7 +33,6 @@
             flex-direction: column;
         }
 
-        /* Шапка с логотипом */
         header {
             height: 64px;
             background: var(--panel-bg);
@@ -53,7 +51,6 @@
             gap: 12px;
             font-weight: 700;
             font-size: 1.1rem;
-            letter-spacing: 0.5px;
             background: linear-gradient(135deg, #fff 0%, #a1a1aa 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -68,6 +65,7 @@
             align-items: center;
             justify-content: center;
             box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
+            -webkit-text-fill-color: #fff;
         }
 
         .header-actions {
@@ -103,7 +101,6 @@
             background: var(--accent-hover);
         }
 
-        /* Рабочая зона */
         .workspace {
             flex: 1;
             position: relative;
@@ -126,33 +123,33 @@
             cursor: grabbing;
         }
 
-        /* Плавающие контекстные окна (draggable) */
-        .floating-panel {
+        /* Плавающее контекстное окно */
+        .floating-popover {
             position: absolute;
-            width: 320px;
+            width: 340px;
             background: var(--panel-bg);
             backdrop-filter: blur(16px);
             border: 1px solid var(--panel-border);
-            border-radius: 14px;
-            padding: 16px;
+            border-radius: 16px;
+            padding: 20px;
             display: flex;
             flex-direction: column;
-            gap: 14px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+            gap: 16px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
             z-index: 40;
             opacity: 0;
-            transform: scale(0.95);
+            transform: scale(0.95) translateY(10px);
             pointer-events: none;
-            transition: opacity 0.2s ease, transform 0.2s ease;
+            transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1), transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        .floating-panel.active {
+        .floating-popover.active {
             opacity: 1;
-            transform: scale(1);
+            transform: scale(1) translateY(0);
             pointer-events: auto;
         }
 
-        .panel-header-drag {
+        .popover-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -160,18 +157,17 @@
             padding-bottom: 10px;
             cursor: grab;
         }
-        .panel-header-drag:active {
+        .popover-header:active {
             cursor: grabbing;
         }
 
-        .panel-title {
+        .popover-title {
             font-size: 0.9rem;
             font-weight: 700;
-            letter-spacing: 0.3px;
         }
 
         .close-btn {
-            background: rgba(255,255,255,0.05);
+            background: rgba(255, 255, 255, 0.05);
             border: 1px solid var(--panel-border);
             color: var(--text-muted);
             width: 24px;
@@ -185,19 +181,20 @@
             transition: all 0.2s;
         }
         .close-btn:hover {
-            background: rgba(255,255,255,0.15);
-            color: var(--text-main);
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border-color: rgba(239, 68, 68, 0.4);
         }
 
-        /* Сетка выбора элементов */
         .options-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 8px;
-            max-height: 260px;
+            max-height: 240px;
             overflow-y: auto;
             padding-right: 2px;
         }
+
         .options-grid::-webkit-scrollbar {
             width: 4px;
         }
@@ -207,7 +204,7 @@
         }
 
         .option-card {
-            background: rgba(255,255,255,0.03);
+            background: rgba(255, 255, 255, 0.03);
             border: 1px solid var(--panel-border);
             border-radius: 8px;
             padding: 8px;
@@ -220,8 +217,8 @@
         }
 
         .option-card:hover {
-            background: rgba(255,255,255,0.08);
-            border-color: rgba(255,255,255,0.2);
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
         }
 
         .option-card.selected {
@@ -229,7 +226,7 @@
             background: rgba(99, 102, 241, 0.15);
         }
 
-        .option-card canvas {
+        .option-card canvas, .option-card .preview-box {
             width: 48px;
             height: 48px;
             background: #09090b;
@@ -238,7 +235,7 @@
         }
 
         .option-card span {
-            font-size: 0.65rem;
+            font-size: 0.68rem;
             font-weight: 600;
             color: var(--text-muted);
         }
@@ -246,78 +243,21 @@
             color: var(--text-main);
         }
 
-        /* Стартовая панель настроек (сцена, освещение, основа) */
-        .start-dock {
+        .interaction-hint {
             position: absolute;
             bottom: 24px;
             left: 50%;
             transform: translateX(-50%);
             background: var(--panel-bg);
-            backdrop-filter: blur(16px);
-            border: 1px solid var(--panel-border);
-            padding: 12px 20px;
-            border-radius: 16px;
-            display: flex;
-            gap: 16px;
-            align-items: center;
-            z-index: 30;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
-        }
-
-        .dock-group {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .dock-label {
-            font-size: 0.65rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: var(--text-muted);
-            font-weight: 700;
-        }
-
-        .dock-options {
-            display: flex;
-            gap: 6px;
-        }
-
-        .dock-btn {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid var(--panel-border);
-            color: var(--text-main);
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .dock-btn:hover {
-            border-color: var(--accent);
-            background: rgba(255,255,255,0.1);
-        }
-        .dock-btn.active {
-            background: var(--accent);
-            border-color: var(--accent);
-        }
-
-        .interaction-hint {
-            position: absolute;
-            top: 24px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(18, 18, 24, 0.85);
             backdrop-filter: blur(10px);
             border: 1px solid var(--panel-border);
-            padding: 8px 18px;
-            border-radius: 20px;
+            padding: 10px 20px;
+            border-radius: 30px;
             font-size: 0.75rem;
             color: var(--text-muted);
             pointer-events: none;
             z-index: 20;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
         }
         .interaction-hint b {
             color: var(--text-main);
@@ -342,105 +282,50 @@
     </header>
 
     <div class="workspace" id="workspace" onclick="handleBackgroundClick(event)">
-        <div class="interaction-hint">
-            💡 Наведите на часть тела для подсветки, кликните для настройки. Клик на фон — сброс.
-        </div>
-
         <canvas id="skin_container"></canvas>
 
-        <!-- Плавающее окно для Головы -->
-        <div class="floating-panel" id="panel_head">
-            <div class="panel-header-drag" onmousedown="startDrag(event, 'panel_head')">
-                <div class="panel-title">👤 Настройка головы</div>
-                <div class="close-btn" onclick="closePanels()">✕</div>
-            </div>
-            <div id="content_head"></div>
+        <div class="interaction-hint" id="interactionHint">
+            💡 Кликните на <b>голову</b> или <b>тело</b> персонажа для кастомизации. Клик на фон — сброс.
         </div>
 
-        <!-- Плавающее окно для Тела/Куртки -->
-        <div class="floating-panel" id="panel_body">
-            <div class="panel-header-drag" onmousedown="startDrag(event, 'panel_body')">
-                <div class="panel-title">👕 Настройка одежды</div>
-                <div class="close-btn" onclick="closePanels()">✕</div>
+        <!-- Плавающее окно настройки -->
+        <div class="floating-popover" id="floatingPopover" onclick="event.stopPropagation()">
+            <div class="popover-header" id="popoverHeader" onmousedown="startDrag(event)">
+                <span class="popover-title" id="popoverTitle">Настройка</span>
+                <div class="close-btn" onclick="closePopover()">✕</div>
             </div>
-            <div id="content_body"></div>
-        </div>
-
-        <!-- Плавающее окно для Рук -->
-        <div class="floating-panel" id="panel_arms">
-            <div class="panel-header-drag" onmousedown="startDrag(event, 'panel_arms')">
-                <div class="panel-title">💪 Настройка рук</div>
-                <div class="close-btn" onclick="closePanels()">✕</div>
-            </div>
-            <div id="content_arms"></div>
-        </div>
-
-        <!-- Плавающее окно для Ног -->
-        <div class="floating-panel" id="panel_legs">
-            <div class="panel-header-drag" onmousedown="startDrag(event, 'panel_legs')">
-                <div class="panel-title">👖 Настройка ног</div>
-                <div class="close-btn" onclick="closePanels()">✕</div>
-            </div>
-            <div id="content_legs"></div>
-        </div>
-
-        <!-- Стартовый нижний док -->
-        <div class="start-dock" id="startDock" onclick="event.stopPropagation()">
-            <div class="dock-group">
-                <div class="dock-label">Основа кожи</div>
-                <div class="dock-options" id="dock_skin"></div>
-            </div>
-            <div class="dock-group">
-                <div class="dock-label">Освещение</div>
-                <div class="dock-options" id="dock_lighting">
-                    <button class="dock-btn active" onclick="setLighting(0, this)">Студия</button>
-                    <button class="dock-btn" onclick="setLighting(1, this)">Ярко</button>
-                    <button class="dock-btn" onclick="setLighting(2, this)">Мрак</button>
-                </div>
-            </div>
-            <div class="dock-group">
-                <div class="dock-label">Фон сцены</div>
-                <div class="dock-options" id="dock_bg"></div>
-            </div>
+            <div id="popoverContent" style="display: flex; flex-direction: column; gap: 14px;"></div>
         </div>
     </div>
 
     <canvas id="hiddenCanvas" width="64" height="64"></canvas>
 
-    <!-- Подключаем Three.js и Skinview3d -->
-    <script type="importmap">
-      {
-        "imports": {
-          "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-          "skinview3d": "https://cdn.jsdelivr.net/npm/skinview3d@3.4.2/+esm"
-        }
-      }
-    </script>
-
     <script type="module">
-        import * as THREE from 'three';
-        import * as skinview3d from 'skinview3d';
+        import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+        import * as skinview3d from 'https://cdn.jsdelivr.net/npm/skinview3d@3.4.2/+esm';
 
         const layersConfig = [
-            { id: 'skin', label: 'Основа', path: 'skinmake/skin', options: ['1', '2', '3'], category: 'base' },
+            { id: 'skin', label: 'База кожи', path: 'skinmake/skin', options: ['1', '2', '3'] },
             { id: 'eyes', label: 'Глаза', path: 'skinmake/head/eyes', options: ['none', '1', '2', '3'], category: 'head' },
             { id: 'nose', label: 'Нос', path: 'skinmake/head/nose', options: ['none', '1', '2'], category: 'head' },
             { id: 'mouth', label: 'Рот', path: 'skinmake/head/mouth', options: ['none', '1', '2'], category: 'head' },
             { id: 'mustache', label: 'Усы', path: 'skinmake/head/mustache', options: ['none', '1', '2'], category: 'head' },
             { id: 'hair', label: 'Прическа', path: 'skinmake/head/hair', options: ['none', '1', '2', '3'], category: 'head' },
-            { id: 'jacket', label: 'Куртка', path: 'skinmake/body/jacket', options: ['none', '1', '2', '3'], category: 'body' },
-            { id: 'background', label: 'Фон', path: 'skinmake/backgrounds', options: ['none', '1', '2', '3'], category: 'bg' }
+            { id: 'jacket', label: 'Куртка / Одежда', path: 'skinmake/body/jacket', options: ['none', '1', '2', '3'], category: 'body' },
+            { id: 'background', label: 'Фон сцены', path: 'skinmake/backgrounds', options: ['none', '1', '2', '3'], isBackground: true },
+            { id: 'lighting', label: 'Освещение', options: ['Студийное', 'Яркое', 'Мрачное'], isLighting: true }
         ];
 
         const state = {};
         let skinViewer = null;
-        let raycaster, mouse;
-        let hoveredPart = null;
-        let activePart = null;
+        let activeCategory = null; // 'head', 'body', or null
+        
+        // Raycaster для точного определения частей тела
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
 
-        // Плавное управление камерой и анимацией целей
-        let targetCameraPos = new THREE.Vector3(0, 0, 45);
-        let targetCameraTarget = new THREE.Vector3(0, 0, 0);
+        // Перетаскивание попловера
+        let isDragging = false, dragOffsetX = 0, dragOffsetY = 0;
 
         const hiddenCanvas = document.getElementById('hiddenCanvas');
         const ctx = hiddenCanvas.getContext('2d');
@@ -461,11 +346,19 @@
             skinViewer.cameraLight.intensity = 0.5;
             skinViewer.fov = 45;
 
-            raycaster = new THREE.Raycaster();
-            mouse = new THREE.Vector2();
+            // Только голова следит за курсором, не ломая вращение камеры
+            window.addEventListener('mousemove', (e) => {
+                if (!skinViewer || !skinViewer.playerObject) return;
+                const xNorm = (e.clientX / window.innerWidth) * 2 - 1;
+                const yNorm = -(e.clientY / window.innerHeight) * 2 + 1;
+                
+                // Плавное слежение только головой
+                skinViewer.playerObject.head.rotation.y = THREE.MathUtils.lerp(skinViewer.playerObject.head.rotation.y, xNorm * 0.5, 0.1);
+                skinViewer.playerObject.head.rotation.x = THREE.MathUtils.lerp(skinViewer.playerObject.head.rotation.x, -yNorm * 0.3, 0.1);
+            });
 
-            container.addEventListener('mousemove', onMouseMove);
-            container.addEventListener('click', onModelClick);
+            // Обработка клика с Raycasting
+            container.addEventListener('pointerdown', handleCanvasPointerDown);
 
             window.addEventListener('resize', () => {
                 skinViewer.width = container.clientWidth;
@@ -474,248 +367,165 @@
         }
 
         function initDefaults() {
-            layersConfig.forEach(l => state[l.id] = l.options[0]);
+            layersConfig.forEach(layer => {
+                state[layer.id] = layer.options[0];
+            });
             updateSkin();
-            buildUI();
         }
 
-        // Собираем элементы интерфейса в плавающие окна
-        function buildUI() {
-            // Заполняем стартовый док (основа кожи и фон)
-            const skinDock = document.getElementById('dock_skin');
-            skinDock.innerHTML = '';
-            layersConfig.find(l => l.id === 'skin').options.forEach(opt => {
-                const btn = document.createElement('button');
-                btn.className = `dock-btn ${state['skin'] === opt ? 'active' : ''}`;
-                btn.innerText = `#${opt}`;
-                btn.onclick = () => { state['skin'] = opt; updateSkin(); buildUI(); };
-                skinDock.appendChild(btn);
-            });
-
-            const bgDock = document.getElementById('dock_bg');
-            bgDock.innerHTML = '';
-            layersConfig.find(l => l.id === 'background').options.forEach(opt => {
-                const btn = document.createElement('button');
-                btn.className = `dock-btn ${state['background'] === opt ? 'active' : ''}`;
-                btn.innerText = opt === 'none' ? 'Нет' : `#${opt}`;
-                btn.onclick = () => { state['background'] = opt; updateBackground(); buildUI(); };
-                bgDock.appendChild(btn);
-            });
-
-            // Заполняем панели категорий
-            ['head', 'body', 'arms', 'legs'].forEach(cat => {
-                const container = document.getElementById(`content_${cat}`);
-                if (!container) return;
-                container.innerHTML = '';
-
-                const relevantLayers = layersConfig.filter(l => l.category === cat);
-                if (relevantLayers.length === 0 && cat === 'arms') {
-                    // Опции для рук или ног если понадобятся
-                }
-
-                relevantLayers.forEach(layer => {
-                    const section = document.createElement('div');
-                    section.style.marginBottom = '12px';
-                    section.innerHTML = `<div style="font-size:0.7rem; font-weight:700; color:var(--text-muted); margin-bottom:6px; text-transform:uppercase;">${layer.label}</div>`;
-                    
-                    const grid = document.createElement('div');
-                    grid.className = 'options-grid';
-
-                    layer.options.forEach(opt => {
-                        const card = document.createElement('div');
-                        const isSelected = state[layer.id] === opt;
-                        card.className = `option-card ${isSelected ? 'selected' : ''}`;
-                        card.onclick = (e) => {
-                            e.stopPropagation();
-                            state[layer.id] = opt;
-                            updateSkin();
-                            buildUI();
-                        };
-
-                        const cardCanvas = document.createElement('canvas');
-                        cardCanvas.width = 48;
-                        cardCanvas.height = 48;
-                        drawCardPreview(layer, opt, cardCanvas);
-
-                        const span = document.createElement('span');
-                        span.innerText = opt === 'none' ? 'Нет' : `#${opt}`;
-
-                        card.appendChild(cardCanvas);
-                        card.appendChild(span);
-                        grid.appendChild(card);
-                    });
-
-                    section.appendChild(grid);
-                    container.appendChild(section);
-                });
-            });
-        }
-
-        // Точное определение пересечения мыши с 3D мешами персонажа
-        function getIntersectedPart(event) {
-            if (!skinViewer || !skinViewer.playerObject) return null;
-            const rect = skinViewer.canvas.getBoundingClientRect();
+        // Продвинутый Raycasting для определения головы / тела / рук
+        function handleCanvasPointerDown(event) {
+            const rect = event.target.getBoundingClientRect();
             mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
             mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
             raycaster.setFromCamera(mouse, skinViewer.camera);
             
-            const meshes = [];
-            skinViewer.playerObject.innerLayer.traverse(child => {
-                if (child.isMesh) meshes.push(child);
-            });
-            skinViewer.playerObject.outerLayer.traverse(child => {
-                if (child.isMesh) meshes.push(child);
-            });
+            // Собираем все меши персонажа
+            const intersects = raycaster.intersectObjects(skinViewer.scene.children, true);
 
-            const intersects = raycaster.intersectObjects(meshes, true);
             if (intersects.length > 0) {
-                const obj = intersects[0].object;
-                // Определяем часть тела по имени или структуре parent
-                let curr = obj;
-                while (curr && curr !== skinViewer.playerObject) {
-                    if (curr === skinViewer.playerObject.head) return 'head';
-                    if (curr === skinViewer.playerObject.body) return 'body';
-                    if (curr === skinViewer.playerObject.leftArm || curr === skinViewer.playerObject.rightArm) return 'arms';
-                    if (curr === skinViewer.playerObject.leftLeg || curr === skinViewer.playerObject.rightLeg) return 'legs';
-                    curr = curr.parent;
+                let hitObject = intersects[0].object;
+                let current = hitObject;
+                let partName = null;
+
+модификация: // Поднимаемся по дереву объектов для поиска конкретной части
+                while (current && current !== skinViewer.scene) {
+                    if (current === skinViewer.playerObject.head) {
+                        partName = 'head';
+                        break;
+                    } else if (current === skinViewer.playerObject.rightArm || current === skinViewer.playerObject.leftArm || current === skinViewer.playerObject.body || current === skinViewer.playerObject.jacket) {
+                        partName = 'body';
+                        break;
+                    } else if (current === skinViewer.playerObject.rightLeg || current === skinViewer.playerObject.leftLeg) {
+                        partName = 'body'; // Ноги относим к телу/одежде
+                        break;
+                    }
+                    current = current.parent;
                 }
-            }
-            return null;
-        }
 
-        function onMouseMove(event) {
-            const part = getIntersectedPart(event);
-            hoveredPart = part;
-
-            // Мягкая подсветка (эмиссия/цвет материалов при наведении)
-            highlightPart(hoveredPart);
-
-            // Голова следит за курсором, если нет активного диалога и мышь в пределах канваса
-            if (skinViewer && skinViewer.playerObject && !activePart) {
-                const rect = skinViewer.canvas.getBoundingClientRect();
-                const xNorm = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-                const yNorm = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-                skinViewer.playerObject.head.rotation.y = THREE.MathUtils.lerp(skinViewer.playerObject.head.rotation.y, xNorm * 0.5, 0.1);
-                skinViewer.playerObject.head.rotation.x = THREE.MathUtils.lerp(skinViewer.playerObject.head.rotation.x, -yNorm * 0.3, 0.1);
+                if (partName) {
+                    openPopover(partName, event.clientX, event.clientY);
+                    playAliveReaction();
+                    event.stopPropagation();
+                } else {
+                    closePopover();
+                }
+            } else {
+                closePopover();
             }
         }
 
-        function highlightPart(partName) {
+        // Оживленная мягкая реакция персонажа ("мультяшный" отклик)
+        function playAliveReaction() {
             if (!skinViewer || !skinViewer.playerObject) return;
+            const originalAnim = skinViewer.animation;
             
-            const parts = {
-                head: skinViewer.playerObject.head,
-                body: skinViewer.playerObject.body,
-                arms: [skinViewer.playerObject.leftArm, skinViewer.playerObject.rightArm],
-                legs: [skinViewer.playerObject.leftLeg, skinViewer.playerObject.rightLeg]
+            // Плавный кивок / подпрыгивание
+            skinViewer.animation = new class extends skinview3d.Animation {
+                animate(player, time) {
+                    player.rotation.y += 0.02; // Легкий поворот
+                    player.head.rotation.z = Math.sin(time * 15) * 0.1; // Удивленный наклон головы
+                }
             };
 
-            // Сброс подсветки у всех
-            skinViewer.playerObject.innerLayer.traverse(child => {
-                if (child.material) child.material.emissive.setHex(0x000000);
-            });
-            skinViewer.playerObject.outerLayer.traverse(child => {
-                if (child.material) child.material.emissive.setHex(0x000000);
-            });
-
-            // Подсветка нужной части мягким свечением
-            if (partName && parts[partName]) {
-                const list = Array.isArray(parts[partName]) ? parts[partName] : [parts[partName]];
-                list.forEach(p => {
-                    p.traverse(child => {
-                        if (child.material) child.material.emissive.setHex(0x333366);
-                    });
-                });
-            }
-        }
-
-        function onModelClick(event) {
-            const part = getIntersectedPart(event);
-            if (!part) return;
-
-            activePart = part;
-            closePanels();
-
-            // Живая реакция персонажа: короткий кивок / поклон
-            playLiveReaction();
-
-            // Показываем плавающее окошко рядом с кликом / частью тела
-            const panel = document.getElementById(`panel_${part}`);
-            if (panel) {
-                panel.classList.add('active');
-                // Позиционируем окно рядом с курсором или в зоне клика
-                const x = Math.min(event.clientX + 20, window.innerWidth - 340);
-                const y = Math.min(event.clientY - 50, window.innerHeight - 380);
-                panel.style.left = `${Math.max(20, x)}px`;
-                panel.style.top = `${Math.max(80, y)}px`;
-            }
-
-            // Плавное приближение камеры к выбранной части тела
-            focusCameraOnPart(part);
-        }
-
-        function playLiveReaction() {
-            if (!skinViewer) return;
-            const prevAnim = skinViewer.animation;
-            // Аккуратная живая анимация кивка / понимания
-            skinViewer.animation = new skinview3d.RunningAnimation();
-            skinViewer.animation.speed = 1.2;
             setTimeout(() => {
-                if (skinViewer) {
-                    skinViewer.animation = new skinview3d.IdleAnimation();
-                    skinViewer.animation.speed = 0.5;
-                }
-            }, 500);
+                if (skinViewer) skinViewer.animation = originalAnim;
+            }, 600);
         }
 
-        function focusCameraOnPart(part) {
-            if (part === 'head') {
-                targetCameraPos.set(0, 10, 25);
-                targetCameraTarget.set(0, 10, 0);
-            } else if (part === 'body' || part === 'arms') {
-                targetCameraPos.set(0, 0, 30);
-                targetCameraTarget.set(0, 0, 0);
-            } else if (part === 'legs') {
-                targetCameraPos.set(0, -12, 30);
-                targetCameraTarget.set(0, -10, 0);
-            }
+        // Открытие плавающего окна возле курсора или части тела
+        window.openPopover = function(category, clientX, clientY) {
+            activeCategory = category;
+            const popover = document.getElementById('floatingPopover');
+            const titleEl = document.getElementById('popoverTitle');
+            const contentEl = document.getElementById('popoverContent');
+
+            titleEl.innerText = category === 'head' ? '👤 Настройка головы' : '👕 Настройка одежды и тела';
+            contentEl.innerHTML = '';
+
+            const relevantLayers = layersConfig.filter(l => l.category === category);
+
+            relevantLayers.forEach(layer => {
+                const section = document.createElement('div');
+                section.innerHTML = `<div style="font-size:0.7rem; font-weight:700; color:var(--text-muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">${layer.label}</div>`;
+                
+                const grid = document.createElement('div');
+                grid.className = 'options-grid';
+
+                layer.options.forEach(opt => {
+                    const card = document.createElement('div');
+                    const isSelected = state[layer.id] === opt;
+                    card.className = `option-card ${isSelected ? 'selected' : ''}`;
+
+                    card.onclick = (e) => {
+                        e.stopPropagation();
+                        state[layer.id] = opt;
+                        updateSkin();
+                        openPopover(category, clientX, clientY); // Перерисовка окна
+                    };
+
+                    const cardCanvas = document.createElement('canvas');
+                    cardCanvas.width = 48;
+                    cardCanvas.height = 48;
+                    
+                    const span = document.createElement('span');
+                    span.innerText = opt === 'none' ? 'Нет' : `Стиль #${opt}`;
+
+                    card.appendChild(cardCanvas);
+                    card.appendChild(span);
+                    grid.appendChild(card);
+                    drawCardPreview(layer, opt, cardCanvas);
+                });
+
+                section.appendChild(grid);
+                contentEl.appendChild(section);
+            });
+
+            // Позиционирование окна в пределах экрана
+            let posX = clientX + 20;
+            let posY = clientY - 50;
+            if (posX + 350 > window.innerWidth) posX = window.innerWidth - 370;
+            if (posY + 400 > window.innerHeight) posY = window.innerHeight - 420;
+            if (posY < 80) posY = 80;
+
+            popover.style.left = `${posX}px`;
+            popover.style.top = `${posY}px`;
+            popover.classList.add('active');
+        }
+
+        window.closePopover = function() {
+            const popover = document.getElementById('floatingPopover');
+            popover.classList.remove('active');
+            activeCategory = null;
         }
 
         window.handleBackgroundClick = function(event) {
-            closePanels();
-            activePart = null;
-            // Возврат камеры в стартовую позицию
-            targetCameraPos.set(0, 0, 45);
-            targetCameraTarget.set(0, 0, 0);
+            closePopover();
         }
 
-        window.closePanels = function() {
-            document.querySelectorAll('.floating-panel').forEach(p => p.classList.remove('active'));
-        }
+        // Перетаскивание попловера за шапку
+        window.startDrag = function(e) {
+            isDragging = true;
+            const popover = document.getElementById('floatingPopover');
+            const rect = popover.getBoundingClientRect();
+            dragOffsetX = e.clientX - rect.left;
+            dragOffsetY = e.clientY - rect.top;
 
-        // Перетаскивание окон за шапку
-        let dragItem = null;
-        let startX = 0, startY = 0;
+            function onMouseMove(moveEvent) {
+                if (!isDragging) return;
+                popover.style.left = `${moveEvent.clientX - dragOffsetX}px`;
+                popover.style.top = `${moveEvent.clientY - dragOffsetY}px`;
+            }
 
-        window.startDrag = function(e, panelId) {
-            dragItem = document.getElementById(panelId);
-            startX = e.clientX - dragItem.offsetLeft;
-            startY = e.clientY - dragItem.offsetTop;
-            document.addEventListener('mousemove', onDrag);
-            document.addEventListener('mouseup', stopDrag);
-        }
+            function onMouseUp() {
+                isDragging = false;
+                window.removeEventListener('mousemove', onMouseMove);
+                window.removeEventListener('mouseup', onMouseUp);
+            }
 
-        function onDrag(e) {
-            if (!dragItem) return;
-            dragItem.style.left = `${e.clientX - startX}px`;
-            dragItem.style.top = `${e.clientY - startY}px`;
-        }
-
-        function stopDrag() {
-            dragItem = null;
-            document.removeEventListener('mousemove', onDrag);
-            document.removeEventListener('mouseup', stopDrag);
+            window.addEventListener('mousemove', onMouseMove);
+            window.addEventListener('mouseup', onMouseUp);
         }
 
         async function drawCardPreview(targetLayer, optionValue, targetCanvas) {
@@ -728,7 +538,7 @@
             const tempCtx = tempCanvas.getContext('2d');
             tempCtx.imageSmoothingEnabled = false;
 
-            const activeRelevantLayers = layersConfig.filter(l => l.category !== 'bg');
+            const activeRelevantLayers = layersConfig.filter(l => !l.isBackground && !l.isLighting);
             const imagePromises = activeRelevantLayers.map(l => {
                 const val = (l.id === targetLayer.id) ? optionValue : state[l.id];
                 if (val === 'none') return Promise.resolve(null);
@@ -755,34 +565,11 @@
             }
         }
 
-        window.updateBackground = function() {
-            const workspace = document.getElementById('workspace');
-            const bgVal = state['background'];
-            workspace.style.backgroundImage = bgVal === 'none' ? 'none' : `url('skinmake/backgrounds/${bgVal}.png')`;
-        }
-
-        window.setLighting = function(presetIndex, btnElement) {
-            document.querySelectorAll('#dock_lighting .dock-btn').forEach(b => b.classList.remove('active'));
-            btnElement.classList.add('active');
-
-            if (!skinViewer) return;
-            if (presetIndex === 0) {
-                skinViewer.globalLight.intensity = 1.3;
-                skinViewer.cameraLight.intensity = 0.5;
-            } else if (presetIndex === 1) {
-                skinViewer.globalLight.intensity = 2.2;
-                skinViewer.cameraLight.intensity = 1.0;
-            } else if (presetIndex === 2) {
-                skinViewer.globalLight.intensity = 0.5;
-                skinViewer.cameraLight.intensity = 0.1;
-            }
-        }
-
         window.updateSkin = async function() {
             ctx.clearRect(0, 0, 64, 64);
             ctx.imageSmoothingEnabled = false;
 
-            const relevantLayers = layersConfig.filter(l => l.category !== 'bg');
+            const relevantLayers = layersConfig.filter(l => !l.isBackground && !l.isLighting);
             const imagePromises = relevantLayers.map(layer => {
                 const selectedOption = state[layer.id];
                 if (selectedOption === 'none') return Promise.resolve(null);
@@ -808,13 +595,12 @@
 
         window.randomizeSkin = function() {
             layersConfig.forEach(layer => {
-                if (layer.category !== 'bg') {
-                    const randOpt = layer.options[Math.floor(Math.random() * layer.options.length)];
-                    state[layer.id] = randOpt;
+                if (!layer.isBackground && !layer.isLighting) {
+                    const randomIndex = Math.floor(Math.random() * layer.options.length);
+                    state[layer.id] = layer.options[randomIndex];
                 }
             });
             updateSkin();
-            buildUI();
         }
 
         window.downloadSkin = function() {
@@ -824,19 +610,8 @@
             link.click();
         }
 
-        // Плавный анимационный цикл для камеры и переходов
-        function animateLoop() {
-            requestAnimationFrame(animateLoop);
-            if (skinViewer && skinViewer.camera && skinViewer.controls) {
-                skinViewer.camera.position.lerp(targetCameraPos, 0.08);
-                skinViewer.controls.target.lerp(targetCameraTarget, 0.08);
-                skinViewer.controls.update();
-            }
-        }
-
         initViewer();
         initDefaults();
-        animateLoop();
     </script>
 </body>
 </html>
