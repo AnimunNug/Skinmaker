@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minecraft Skin Constructor</title>
+    <title>Minecraft Skin Constructor 3D</title>
     <style>
         :root {
             --bg-color: #1e1e2e;
@@ -27,12 +27,12 @@
 
         .container {
             display: flex;
-            gap: 40px;
+            gap: 30px;
             background-color: var(--panel-bg);
             padding: 30px;
             border-radius: var(--border-radius);
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            max-width: 900px;
+            max-width: 950px;
             width: 100%;
             flex-wrap: wrap;
         }
@@ -40,25 +40,36 @@
         .controls {
             flex: 1;
             min-width: 250px;
+            max-height: 500px;
+            overflow-y: auto;
+            padding-right: 10px;
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 12px;
+        }
+
+        .controls::-webkit-scrollbar {
+            width: 6px;
+        }
+        .controls::-webkit-scrollbar-thumb {
+            background: #6272a4;
+            border-radius: 3px;
         }
 
         .control-group {
             display: flex;
             flex-direction: column;
-            gap: 5px;
+            gap: 4px;
         }
 
         label {
-            font-size: 0.9em;
+            font-size: 0.85em;
             font-weight: 600;
             color: #8be9fd;
         }
 
         select {
-            padding: 10px;
+            padding: 8px;
             background-color: #44475a;
             color: var(--text-color);
             border: 1px solid #6272a4;
@@ -76,32 +87,41 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 20px;
+            gap: 15px;
             min-width: 300px;
         }
 
-        /* Канвас 64x64 искусственно увеличивается без размытия (pixel art) */
-        canvas {
-            width: 256px;
-            height: 256px;
-            background-color: #00000033;
+        /* Контейнер для 3D-модели */
+        #skin_container {
+            width: 300px;
+            height: 400px;
+            background-color: #15151d;
             border: 2px dashed #6272a4;
-            border-radius: 4px;
-            image-rendering: pixelated; /* Поддержка Chrome/Edge */
-            image-rendering: crisp-edges; /* Поддержка Firefox */
+            border-radius: var(--border-radius);
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.5);
+            cursor: grab;
+        }
+        #skin_container:active {
+            cursor: grabbing;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            width: 100%;
         }
 
         button {
-            padding: 12px 24px;
+            padding: 10px 16px;
             background-color: var(--accent-color);
             color: #282a36;
             border: none;
             border-radius: var(--border-radius);
             font-weight: bold;
-            font-size: 1em;
+            font-size: 0.95em;
             cursor: pointer;
             transition: transform 0.1s, opacity 0.2s;
-            width: 100%;
+            flex: 1;
         }
 
         button:hover {
@@ -111,6 +131,12 @@
         
         button:active {
             transform: scale(0.98);
+        }
+
+        .secondary-btn {
+            background-color: #44475a;
+            color: var(--text-color);
+            border: 1px solid #6272a4;
         }
     </style>
 </head>
@@ -122,14 +148,24 @@
         </div>
 
         <div class="preview-section">
-            <canvas id="skinCanvas" width="64" height="64"></canvas>
-            <button onclick="downloadSkin()">Скачать скин</button>
+            <!-- Канвас под 3D-просмотрщик skinview3d -->
+            <canvas id="skin_container"></canvas>
+            
+            <div class="button-group">
+                <button class="secondary-btn" id="animToggle" onclick="toggleAnimation()">Анимация: Вкл</button>
+                <button onclick="downloadSkin()">Скачать скин</button>
+            </div>
         </div>
     </div>
 
-    <script>
-        // Конфигурация слоев. 
-        // Порядок в массиве определяет порядок наложения (z-index). Первые рисуются снизу.
+    <!-- Скрытый холст для программной склейки слоев в PNG 64x64 -->
+    <canvas id="hiddenCanvas" width="64" height="64" style="display:none;"></canvas>
+
+    <!-- Подключаем библиотеку skinview3d через ESM CDN (без сборщиков) -->
+    <script type="module">
+        import * as skinview3d from 'https://cdn.jsdelivr.net/npm/skinview3d@3.4.2/+esm';
+
+        // Конфигурация слоев проекта
         const layersConfig = [
             { id: 'skin', label: 'Цвет кожи', path: 'skinmake/skin', options: ['1', '2', '3'] },
             { id: 'eyes', label: 'Глаза', path: 'skinmake/head/eyes', options: ['none', '1', '2', '3'] },
@@ -141,18 +177,39 @@
             { id: 'jacket', label: 'Куртка', path: 'skinmake/body/jacket', options: ['none', '1', '2', '3'] }
         ];
 
-        // Текущее состояние выбранных элементов
         const state = {};
-        
-        const canvas = document.getElementById('skinCanvas');
-        const ctx = canvas.getContext('2d');
+        let skinViewer = null;
+        let isAnimated = true;
 
-        // Инициализация интерфейса
-        function init() {
+        const hiddenCanvas = document.getElementById('hiddenCanvas');
+        const ctx = hiddenCanvas.getContext('2d');
+
+        // Инициализация 3D сцены
+        function initViewer() {
+            skinViewer = new skinview3d.SkinViewer({
+                canvas: document.getElementById('skin_container'),
+                width: 300,
+                height: 400,
+                skin: null
+            });
+
+            // Настройки отображения
+            skinViewer.autoRotate = true;
+            skinViewer.autoRotateSpeed = 1.5;
+            skinViewer.animation = new skinview3d.WalkingAnimation(); // Включаем ходьбу по умолчанию
+            skinViewer.animation.speed = 1.0;
+
+            // Настройка освещения
+            skinViewer.globalLight.intensity = 1.2;
+            skinViewer.cameraLight.intensity = 0.4;
+        }
+
+        // Создание элементов управления в интерфейсе
+        function initUI() {
             const controlsContainer = document.getElementById('controls');
 
             layersConfig.forEach(layer => {
-                state[layer.id] = layer.options[0]; // Выбираем первый элемент по умолчанию
+                state[layer.id] = layer.options[0];
 
                 const group = document.createElement('div');
                 group.className = 'control-group';
@@ -163,7 +220,7 @@
                 const select = document.createElement('select');
                 select.onchange = (e) => {
                     state[layer.id] = e.target.value;
-                    renderSkin();
+                    updateSkin();
                 };
 
                 layer.options.forEach(opt => {
@@ -177,16 +234,12 @@
                 group.appendChild(select);
                 controlsContainer.appendChild(group);
             });
-
-            renderSkin();
         }
 
-        // Отрисовка скина
-        async function renderSkin() {
-            // Очищаем канвас перед новой отрисовкой
+        // Перерисовка текстуры и обновление 3D-модели
+        window.updateSkin = async function() {
             ctx.clearRect(0, 0, 64, 64);
 
-            // Создаем массив промисов для параллельной загрузки нужных картинок
             const imagePromises = layersConfig.map(layer => {
                 const selectedOption = state[layer.id];
                 if (selectedOption === 'none') return Promise.resolve(null);
@@ -195,34 +248,53 @@
                 
                 return new Promise((resolve) => {
                     const img = new Image();
-                    img.crossOrigin = "Anonymous"; // Требуется для безопасного экспорта канваса
+                    img.crossOrigin = "Anonymous";
                     img.onload = () => resolve(img);
-                    img.onerror = () => resolve(null); // Если файла нет, просто пропускаем
+                    img.onerror = () => resolve(null);
                     img.src = imagePath;
                 });
             });
 
-            // Ждем загрузки всех изображений
             const loadedImages = await Promise.all(imagePromises);
 
-            // Отрисовываем их строго в порядке слоев
+            // Наложение слоев друг на друга в правильном порядке
             loadedImages.forEach(img => {
                 if (img) {
                     ctx.drawImage(img, 0, 0, 64, 64);
                 }
             });
+
+            // Передаем итоговый холст как текстуру в 3D-просмотрщик
+            if (skinViewer) {
+                skinViewer.loadSkin(hiddenCanvas.toDataURL());
+            }
         }
 
         // Скачивание готового скина
-        function downloadSkin() {
+        window.downloadSkin = function() {
             const link = document.createElement('a');
             link.download = 'custom_skin.png';
-            link.href = canvas.toDataURL('image/png');
+            link.href = hiddenCanvas.toDataURL('image/png');
             link.click();
         }
 
-        // Запуск
-        init();
+        // Переключение анимации (Ходьба / Статика)
+        window.toggleAnimation = function() {
+            isAnimated = !isAnimated;
+            const btn = document.getElementById('animToggle');
+            if (isAnimated) {
+                skinViewer.animation = new skinview3d.WalkingAnimation();
+                btn.innerText = "Анимация: Вкл";
+            } else {
+                skinViewer.animation = null;
+                btn.innerText = "Анимация: Выкл";
+            }
+        }
+
+        // Запуск приложения
+        initViewer();
+        initUI();
+        updateSkin();
     </script>
 </body>
 </html>
